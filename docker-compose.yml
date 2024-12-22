@@ -1,0 +1,48 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  regional-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tenzro-regional-node:latest
+    container_name: regional-node
+    environment:
+      - NODE_ENV=production
+      - NODE_TYPE=regional_node
+      - NODE_TIER=aggregator
+      - REGION=${REGION:-us-east}
+      - TOKEN_BALANCE=5000
+      - DHT_ENABLED=true
+      - DHT_REFRESH_INTERVAL=60000
+      - METRICS_UPDATE_INTERVAL=15000
+      - HEALTH_CHECK_INTERVAL=30000
+      - BOOTSTRAP_NODES=${BOOTSTRAP_NODES:-}
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - regional_data:/app/data
+    networks:
+      - tenzro-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+networks:
+  tenzro-network:
+    driver: bridge
+
+volumes:
+  regional_data:
